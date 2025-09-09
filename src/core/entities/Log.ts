@@ -42,8 +42,4 @@ export class Log {
 
     @Column()
     functionUsed!: string; // Função que gerou a mudança
-
-    @ManyToOne(() => User, (user) => user.logs, { onDelete: 'CASCADE' })
-    @JoinColumn()
-    user!: User;
 } 

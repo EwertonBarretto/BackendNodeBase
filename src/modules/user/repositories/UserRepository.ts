@@ -28,7 +28,16 @@ export class UserRepository implements IUserRepository {
     }
 
     async update(id: number, userData: Partial<User>): Promise<User | null> {
-        await this.repository.update(id, userData);
+        const user = await this.findById(id);
+        if (!user) {
+            return null;
+        }
+
+        user.password = userData.password ?? user.password;
+        user.name = userData.name ?? user.name;
+        user.email = userData.email ?? user.email;
+
+        await this.repository.update(user.id, user);
         return await this.findById(id);
     }
 

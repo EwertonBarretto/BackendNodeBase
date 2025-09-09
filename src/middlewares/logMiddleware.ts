@@ -25,18 +25,22 @@ export const logMiddleware = async (req: Request, res: Response, next: NextFunct
         return next();
     }
 
-    // Verifica se tem o ID da entidade
-    let entityId: number;
+    let entityId: number | undefined;
 
-    if (method === 'PUT') {
-        // Para PUT, tenta pegar do body primeiro, depois dos parâmetros
-        entityId = req.body.id ? parseInt(req.body.id) : parseInt(pathSegments[2]);
-    } else {
-        // Para DELETE, pega dos parâmetros da URL
-        entityId = parseInt(pathSegments[2]);
+    // Tenta pegar de req.params (ex: /api/users/:id)
+    if (req.params && req.params.id && /^\d+$/.test(req.params.id)) {
+        entityId = parseInt(req.params.id, 10);
     }
 
-    if (isNaN(entityId)) {
+    // Se ainda não achou, tenta pegar do segmento da URL (ex: /api/users/123)
+    if ((entityId === undefined || isNaN(entityId))) {
+        const idSegment = pathSegments.find((seg) => /^\d+$/.test(seg));
+        if (idSegment) {
+            entityId = parseInt(idSegment, 10);
+        }
+    }
+
+    if (!entityId || isNaN(entityId)) {
         return next();
     }
 
@@ -129,8 +133,8 @@ export const logMiddleware = async (req: Request, res: Response, next: NextFunct
                 const newData = req.body;
 
                 Object.keys(newData).forEach((key) => {
-                    const oldVal = beforeUpdateData?.[key];
-                    const newVal = newData[key];
+                    const oldVal = key === "password" ? "-" : beforeUpdateData?.[key];
+                    const newVal = key === "password" ? "-updated-" : newData[key];
 
                     // Só registra se o valor realmente mudou
                     if (newVal !== null && newVal !== undefined && oldVal !== newVal) {

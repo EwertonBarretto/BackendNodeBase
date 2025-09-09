@@ -44,8 +44,8 @@ export class User {
     @UpdateDateColumn()
     updated_at!: Date;
 
-    @OneToMany(() => Log, (log) => log.user)
-    logs!: Log[];
+    // @OneToMany(() => Log, (log) => log.user)
+    // logs!: Log[];
 
     @BeforeInsert()
     @BeforeUpdate()

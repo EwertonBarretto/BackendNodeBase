@@ -69,6 +69,15 @@ export class UserController {
     async updateUser(req: Request, res: Response): Promise<void> {
         try {
             const id = parseInt(req.params.id);
+
+            if (!id || isNaN(id)) {
+                res.status(400).json({
+                    success: false,
+                    message: 'ID do usuário é obrigatório',
+                });
+                return;
+            }
+
             const userData: UpdateUserDto = req.body;
             const user = await this.userService.updateUser(id, userData);
 
