@@ -5,15 +5,37 @@ import { CreateUserDto } from '../dtos/CreateUserDto';
 import { UpdateUserDto } from '../dtos/UpdateUserDto';
 import { AppError } from '../../../errors/AppError';
 import { FileManager } from '../../../shared/utils/fileManager';
+import { UserRole } from '../../../core/entities/enums';
 
 export class UserService implements IUserService {
     constructor(private userRepository: IUserRepository) { }
 
     async createUser(userData: CreateUserDto): Promise<User> {
-        const existingUser = await this.userRepository.findByEmail(userData.email);
-        if (existingUser) {
-            throw new AppError('Email já está em uso', 400);
+        if (userData && userData.email) {
+            const existingUserWithEmail = await this.userRepository.findByEmail(userData.email);
+            if (existingUserWithEmail) {
+                throw new AppError('Email já está em uso', 400);
+            }
         }
+
+        if (!userData.celphone) {
+            throw new AppError('Celular é obrigatório', 400);
+        }
+
+        // Verifica unicidade do celphone
+        const existingCelphone = await this.userRepository.findByCelphone(userData.celphone);
+        if (existingCelphone) {
+            throw new AppError('Celular já está em uso', 400);
+        }
+
+        if (userData.isActive === undefined) {
+            userData.isActive = true;
+        }
+
+        // Define valores padrão para os novos campos, se necessário
+        userData.role = userData.role || UserRole.STUDENT;
+        userData.isStudent = userData.isStudent || false;
+        userData.discountPercentage = userData.discountPercentage || 0;
 
         return await this.userRepository.create(userData);
     }
@@ -34,6 +56,23 @@ export class UserService implements IUserService {
         return await this.userRepository.findAll();
     }
 
+    async updatePassword(celphone: string, newPassword: string): Promise<User> {
+        const user = await this.userRepository.findByCelphone(celphone);
+        if (!user) {
+            throw new AppError('Usuário não encontrado', 404);
+        }
+
+        try {
+            const updatedUser = await this.userRepository.update(user.id, { password: newPassword });
+            if (!updatedUser) {
+                throw new AppError('Erro ao atualizar usuário', 500);
+            }
+            return updatedUser;
+        } catch (error) {
+            throw new AppError('Erro ao atualizar senha', 400);
+        }
+    }
+
     async updateUser(id: number, userData: UpdateUserDto): Promise<User> {
         const existingUser = await this.userRepository.findById(id);
         if (!existingUser) {
@@ -47,12 +86,25 @@ export class UserService implements IUserService {
             }
         }
 
-        const updatedUser = await this.userRepository.update(id, userData);
-        if (!updatedUser) {
+        // Validação extra para celphone
+        if (userData.celphone !== undefined && userData.celphone !== existingUser.celphone) {
+            const existingCelphone = await this.userRepository.findByCelphone(userData.celphone);
+            if (existingCelphone) {
+                throw new AppError('Celular já está em uso', 400);
+            }
+        }
+
+        try {
+            const updatedUser = await this.userRepository.update(id, userData);
+            if (!updatedUser) {
+                throw new AppError('Erro ao atualizar usuário', 500);
+            }
+            return updatedUser;
+        } catch (error) {
             throw new AppError('Erro ao atualizar usuário', 500);
         }
 
-        return updatedUser;
+
     }
 
     async deleteUser(id: number): Promise<void> {
@@ -126,4 +178,4 @@ export class UserService implements IUserService {
             throw new AppError('Erro ao processar remoção do avatar', 500);
         }
     }
-} 
+}

@@ -3,6 +3,7 @@ import { IUserService } from '../../../core/interfaces/services/IUserService';
 import { CreateUserDto } from '../dtos/CreateUserDto';
 import { UpdateUserDto } from '../dtos/UpdateUserDto';
 import { AuthenticatedRequest } from '../../../middlewares/auth';
+import { isEmpty } from 'class-validator';
 
 export class UserController {
     constructor(private userService: IUserService) { }
@@ -10,11 +11,10 @@ export class UserController {
     async createUser(req: Request, res: Response): Promise<void> {
         try {
             const userData: CreateUserDto = req.body;
+            // celphone e isActive já tratados no serviço
             const user = await this.userService.createUser(userData);
 
-            // Remove a senha do response
             const { password, ...userWithoutPassword } = user;
-
             res.status(201).json({
                 success: true,
                 data: userWithoutPassword,
@@ -79,11 +79,10 @@ export class UserController {
             }
 
             const userData: UpdateUserDto = req.body;
+            // celphone e isActive já tratados no serviço
             const user = await this.userService.updateUser(id, userData);
 
-            // Remove a senha do response
             const { password, ...userWithoutPassword } = user;
-
             res.status(200).json({
                 success: true,
                 data: userWithoutPassword,
@@ -114,9 +113,49 @@ export class UserController {
         }
     }
 
+    async resetPassword(req: Request, res: Response): Promise<void> {
+        try {
+            const celphone = req.params.celphone;
+
+            if (!celphone || isEmpty(celphone)) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Celular do usuário é obrigatório',
+                });
+                return;
+            }
+
+            const userData: UpdateUserDto = req.body;
+            if (!userData || !userData.password) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Senha do usuário é obrigatória',
+                });
+                return;
+            }
+
+            // celphone e isActive já tratados no serviço
+            const user = await this.userService.updatePassword(celphone, userData?.password || '');
+
+            const { password, ...userWithoutPassword } = user;
+            res.status(200).json({
+                success: true,
+                data: userWithoutPassword,
+                message: 'Usuário atualizado com sucesso',
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: error instanceof Error ? error.message : 'Erro interno do servidor',
+            });
+        }
+    }
+
     async uploadAvatar(req: AuthenticatedRequest, res: Response): Promise<void> {
         try {
-            const userId = req.user?.id;
+            const userLogadoId = req.user?.id;
+            const userId = parseInt(req.params.id);
+
             if (!userId) {
                 res.status(401).json({
                     success: false,

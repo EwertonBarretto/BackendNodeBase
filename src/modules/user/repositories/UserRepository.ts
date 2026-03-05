@@ -23,6 +23,10 @@ export class UserRepository implements IUserRepository {
         return await this.repository.findOne({ where: { email } });
     }
 
+    async findByCelphone(celphone: string): Promise<User | null> {
+        return await this.repository.findOne({ where: { celphone } });
+    }
+
     async findAll(): Promise<User[]> {
         return await this.repository.find();
     }
@@ -36,6 +40,16 @@ export class UserRepository implements IUserRepository {
         user.password = userData.password ?? user.password;
         user.name = userData.name ?? user.name;
         user.email = userData.email ?? user.email;
+        user.celphone = userData.celphone ?? user.celphone;
+        user.role = userData.role ?? user.role;
+        user.isStudent = userData.isStudent ?? user.isStudent;
+        user.graduation = userData.graduation ?? user.graduation;
+        user.subGraduation = userData.subGraduation ?? user.subGraduation;
+        user.discountPercentage = userData.discountPercentage ?? user.discountPercentage;
+        user.finalAmount = userData.finalAmount ?? user.finalAmount;
+        user.celphone = userData.celphone ?? user.celphone;
+        user.avatar_url = userData.avatar_url ?? user.avatar_url;
+        user.isActive = userData.isActive ?? user.isActive;
 
         await this.repository.update(user.id, user);
         return await this.findById(id);
@@ -45,4 +59,4 @@ export class UserRepository implements IUserRepository {
         const result = await this.repository.delete(id);
         return result.affected ? result.affected > 0 : false;
     }
-} 
+}

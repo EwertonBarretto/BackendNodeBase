@@ -16,9 +16,20 @@ const authController = new AuthController(authService, userService);
 
 // Validações
 const registerValidation = [
+    // body('name').isString().isLength({ min: 2, max: 100 }).withMessage('Nome deve ter entre 2 e 100 caracteres'),
+    // body('email').optional().isEmail().withMessage('Email deve ser válido'),
+    // body('password').optional().isLength({ min: 6 }).withMessage('Senha deve ter pelo menos 6 caracteres'),
+
     body('name').isString().isLength({ min: 2, max: 100 }).withMessage('Nome deve ter entre 2 e 100 caracteres'),
-    body('email').isEmail().withMessage('Email deve ser válido'),
-    body('password').isLength({ min: 6 }).withMessage('Senha deve ter pelo menos 6 caracteres'),
+    body('email').optional().isEmail().withMessage('Email deve ser válido'),
+    body('celphone').isString().isLength({ min: 12, max: 20 }).withMessage('Celular deve ser válido'),
+    body('password').optional().isLength({ min: 6 }).withMessage('Senha deve ter pelo menos 6 caracteres'),
+    body('role').isIn(['ADMIN', 'STUDENT', 'TEACHER']).withMessage('Role deve ser ADMIN, STUDENT ou TEACHER'),
+    body('isStudent').optional().isBoolean().withMessage('isStudent deve ser um valor booleano'),
+    body('graduation').optional().isIn(['WHITE', 'BLUE', 'PURPLE', 'BROWN', 'BLACK']).withMessage('Graduation inválida'),
+    body('subGraduation').optional().isInt({ min: 0 }).withMessage('SubGraduation deve ser um número inteiro positivo'),
+    body('discountPercentage').optional().isFloat({ min: 0, max: 100 }).withMessage('discountPercentage deve estar entre 0 e 100'),
+    body('finalAmount').optional().isFloat({ min: 0 }).withMessage('finalAmount deve ser um número positivo'),
 ];
 
 const loginValidation = [

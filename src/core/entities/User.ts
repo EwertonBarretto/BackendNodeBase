@@ -7,10 +7,12 @@ import {
     BeforeInsert,
     BeforeUpdate,
     OneToMany,
+    ManyToOne
 } from 'typeorm';
 import { IsEmail, MinLength, IsOptional, IsUrl } from 'class-validator';
 import * as bcrypt from 'bcryptjs';
 import { Log } from './Log';
+import { BeltGraduation, UserRole } from './enums';
 
 @Entity('users')
 export class User {
@@ -20,13 +22,45 @@ export class User {
     @Column({ type: 'varchar', length: 100, nullable: false })
     name!: string;
 
-    @Column({ type: 'varchar', length: 100, unique: true, nullable: false })
+    @Column({ type: 'varchar', length: 100, nullable: true })
     @IsEmail()
-    email!: string;
+    email?: string;
 
-    @Column({ type: 'varchar', length: 255, nullable: false })
+    @Column({ nullable: false, unique: true })
+    @MinLength(12) // Mínimo 12 dígitos para celular
+    celphone!: string;
+
+    @Column({ type: 'varchar', length: 255, nullable: true })
     @MinLength(6)
-    password!: string;
+    password?: string;
+
+    @Column({
+        type: "enum",
+        enum: UserRole,
+    })
+    role!: UserRole;
+
+    @Column({ default: false })
+    isStudent!: boolean;
+
+    @Column({
+        type: "enum",
+        enum: BeltGraduation,
+        nullable: true,
+    })
+    graduation?: BeltGraduation;
+
+    @Column({ type: "int", nullable: true })
+    subGraduation?: number; // Grau ou Dan
+
+    @Column({ type: "decimal", precision: 5, scale: 2, default: 0 })
+    discountPercentage?: number;
+
+    @Column({ type: "decimal", precision: 10, scale: 2, nullable: true })
+    finalAmount?: number;
+
+    @Column({ default: true })
+    isActive!: boolean;
 
     @Column({
         type: 'varchar',
@@ -44,8 +78,18 @@ export class User {
     @UpdateDateColumn()
     updated_at!: Date;
 
+    //TODO REVER
     // @OneToMany(() => Log, (log) => log.user)
     // logs!: Log[];
+
+    // @ManyToOne(() => Company, (company) => company.users)
+    // company: Company;
+
+    // @OneToMany(() => Enrollment, (enrollment) => enrollment.student)
+    // enrollments: Enrollment[];
+
+    // @OneToMany(() => Attendance, (attendance) => attendance.student)
+    // attendances: Attendance[];
 
     @BeforeInsert()
     @BeforeUpdate()
@@ -57,6 +101,6 @@ export class User {
     }
 
     async validatePassword(password: string): Promise<boolean> {
-        return bcrypt.compare(password, this.password);
+        return bcrypt.compare(password, this.password || '');
     }
 }
